@@ -12,6 +12,16 @@ module Psych
     #   builder.tree # => #<Psych::Nodes::Stream .. }
     #
     class YAMLTree < Psych::Visitors::Visitor
+      class << self
+        def hash_mapping_format= format
+          @__hash_mapping_format__ = format
+        end
+
+        def hash_mapping_format
+          @__hash_mapping_format__ || Psych::Nodes::Mapping::BLOCK
+        end
+      end
+
       class Registrar # :nodoc:
         def initialize
           @obj_to_id   = {}
@@ -370,7 +380,7 @@ module Psych
 
       def visit_Hash o
         if o.class == ::Hash
-          register(o, @emitter.start_mapping(nil, nil, true, Psych::Nodes::Mapping::BLOCK))
+          register(o, @emitter.start_mapping(nil, nil, true, self.class.hash_mapping_format))
           o.each do |k,v|
             accept k
             accept v
@@ -473,12 +483,12 @@ module Psych
         ivars = o.instance_variables
         if ivars.any?
           tag = "!ruby/hash-with-ivars:#{o.class}"
-          node = @emitter.start_mapping(nil, tag, false, Psych::Nodes::Mapping::BLOCK)
+          node = @emitter.start_mapping(nil, tag, false, self.class.hash_mapping_format)
           register(o, node)
 
           # Dump the elements
           accept 'elements'
-          @emitter.start_mapping nil, nil, true, Nodes::Mapping::BLOCK
+          @emitter.start_mapping nil, nil, true, self.class.hash_mapping_format
           o.each do |k,v|
             accept k
             accept v
@@ -487,7 +497,7 @@ module Psych
 
           # Dump the ivars
           accept 'ivars'
-          @emitter.start_mapping nil, nil, true, Nodes::Mapping::BLOCK
+          @emitter.start_mapping nil, nil, true, self.class.hash_mapping_format
           o.instance_variables.each do |ivar|
             accept ivar
             accept o.instance_variable_get ivar
@@ -497,7 +507,7 @@ module Psych
           @emitter.end_mapping
         else
           tag = "!ruby/hash:#{o.class}"
-          node = @emitter.start_mapping(nil, tag, false, Psych::Nodes::Mapping::BLOCK)
+          node = @emitter.start_mapping(nil, tag, false, self.class.hash_mapping_format)
           register(o, node)
           o.each do |k,v|
             accept k

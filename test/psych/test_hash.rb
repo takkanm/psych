@@ -90,5 +90,16 @@ bar:
 eoyml
       assert_equal({"foo"=>{"hello"=>"world"}, "bar"=>{"hello"=>"world"}}, hash)
     end
+
+    def test_set_format
+      origin_format = Psych::Visitors::YAMLTree.hash_mapping_format
+
+      begin
+        Psych::Visitors::YAMLTree.hash_mapping_format = Psych::Nodes::Mapping::FLOW
+        assert_equal ({'a' => 1, 'c' => 3}).to_yaml,  "--- {a: 1, c: 3}\n"
+      ensure
+        Psych::Visitors::YAMLTree.hash_mapping_format = origin_format
+      end
+    end
   end
 end
